@@ -204,7 +204,7 @@ export default function DoctorChat() {
                     />
                     <p className="text-lg font-medium">Ask Heidi</p>
                     <p className="text-sm">Enter the patient details on the left</p>
-                    <p className="text-sm">for Heidi to provide their initial differentials</p>
+                    <p className="text-sm">for Heidi to provide their clinical summary</p>
                   </div>
                 </div>
               )}
