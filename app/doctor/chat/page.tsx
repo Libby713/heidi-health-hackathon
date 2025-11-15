@@ -1,4 +1,5 @@
-import type { Metadata } from 'next'
+'use client'
+
 import { Mic, Send, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,11 +10,6 @@ import Image from 'next/image'
 type Message = {
   role: 'user' | 'assistant'
   content: string
-}
-
-export const metadata: Metadata = {
-  title: 'Ask Heidi',
-  description: 'Ask Heidi about your patients',
 }
 
 export default function DoctorChat() {
