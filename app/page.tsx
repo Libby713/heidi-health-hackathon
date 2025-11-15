@@ -73,9 +73,9 @@ export default function Home() {
   }
 
   return (
-    <div className="flex h-screen flex-col bg-muted/30 p-4">
+    <div className="flex h-screen flex-col p-4" style={{ backgroundColor: '#F9F4F1' }}>
       {/* Main content area */}
-      <div className="mb-4 flex-1 overflow-auto rounded-lg bg-card shadow-sm">
+      <div className="mb-4 flex-1 overflow-auto rounded-lg shadow-sm" style={{ backgroundColor: '#FCFAF8' }}>
         {messages.length > 0 && (
           <div className="flex items-center justify-between border-b px-6 py-3">
             <h2 className="text-sm font-medium text-muted-foreground">Chat with Heidi</h2>
@@ -91,16 +91,16 @@ export default function Home() {
           </div>
         )}
 
-        <div className="flex flex-col gap-4 p-6">
+        <div className={cn("flex flex-col gap-4 p-6", messages.length === 0 ? "min-h-full" : "")}>
           {messages.length === 0 && (
-            <div className="flex h-full items-center justify-center text-center text-muted-foreground">
+            <div className="flex flex-1 items-center justify-center text-center text-muted-foreground">
               <div>
                 <Image
                   src="/heidi-logo.jpg"
                   alt="Heidi"
                   width={48}
                   height={48}
-                  className="mx-auto mb-4"
+                  className="mx-auto mb-2"
                 />
                 <p className="text-lg font-medium">Tell Heidi</p>
                 <p className="text-sm">Start a conversation with Heidi below</p>
@@ -129,9 +129,10 @@ export default function Home() {
                 className={cn(
                   'max-w-[80%] rounded-lg px-4 py-2',
                   message.role === 'user'
-                    ? 'bg-primary text-primary-foreground'
+                    ? 'text-primary-foreground'
                     : 'bg-muted text-foreground'
                 )}
+                style={message.role === 'user' ? { backgroundColor: '#211217', color: 'white' } : {}}
               >
                 <p className="text-sm leading-relaxed">{message.content}</p>
               </div>
@@ -164,7 +165,7 @@ export default function Home() {
       </div>
 
       {/* Input bar */}
-      <form onSubmit={handleSubmit} className="flex items-center gap-2 rounded-lg bg-card px-4 py-3 shadow-sm">
+      <form onSubmit={handleSubmit} className="flex items-center gap-2 rounded-lg px-4 py-3 shadow-sm" style={{ backgroundColor: '#FCFAF8' }}>
         <Image
           src="/heidi-logo.jpg"
           alt="Heidi"
@@ -175,7 +176,7 @@ export default function Home() {
         <Input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="What has brought you to the hospital today?"
+          placeholder={messages.length === 0 ? "What has brought you to the hospital today?" : "Type your response..."}
           className="flex-1 border-0 bg-transparent px-2 shadow-none focus-visible:ring-0"
           disabled={isLoading}
         />
@@ -191,12 +192,8 @@ export default function Home() {
         <Button
           type="submit"
           size="icon"
-          className={cn(
-            "h-8 w-8 rounded-full transition-colors",
-            input.trim() && !isLoading
-              ? "bg-foreground text-background hover:bg-foreground/90"
-              : "bg-foreground/20 text-foreground/40 hover:bg-foreground/20"
-          )}
+          className="h-8 w-8 rounded-full text-background transition-colors hover:opacity-90"
+          style={{ backgroundColor: '#211217' }}
           disabled={isLoading || !input.trim()}
         >
           <Send className="h-4 w-4" />
