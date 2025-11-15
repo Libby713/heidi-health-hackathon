@@ -9,7 +9,7 @@ importers:
   .:
     dependencies:
       '@anthropic-ai/sdk':
-        specifier: 0.69.0
+        specifier: latest
         version: 0.69.0(zod@3.25.76)
       '@hookform/resolvers':
         specifier: ^3.10.0
