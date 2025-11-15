@@ -196,7 +196,7 @@ export default function DoctorChat() {
                 <div className="flex flex-1 items-center justify-center text-center text-muted-foreground">
                   <div>
                     <Image
-                      src="/heidi-logo.jpg"
+                      src="/heidi-logo.png"
                       alt="Heidi"
                       width={48}
                       height={48}
@@ -217,7 +217,7 @@ export default function DoctorChat() {
                   {message.role === 'assistant' && (
                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
                       <Image
-                        src="/heidi-logo.jpg"
+                        src="/heidi-logo.png"
                         alt="Heidi"
                         width={20}
                         height={20}
@@ -243,7 +243,7 @@ export default function DoctorChat() {
                 <div className="flex gap-3">
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
                     <Image
-                      src="/heidi-logo.jpg"
+                      src="/heidi-logo.png"
                       alt="Heidi"
                       width={20}
                       height={20}
@@ -267,7 +267,7 @@ export default function DoctorChat() {
           {/* Input bar - Now part of chat section */}
           <form onSubmit={handleSubmit} className="flex items-center gap-2 rounded-lg px-4 py-3 shadow-sm" style={{ backgroundColor: '#FCFAF8' }}>
             <Image
-              src="/heidi-logo.jpg"
+              src="/heidi-logo.png"
               alt="Heidi"
               width={20}
               height={20}
@@ -276,7 +276,7 @@ export default function DoctorChat() {
             <Input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask Heidi about the results, or enter physical examination data"
+              placeholder="Ask Heidi about the results, or enter additional data"
               className="flex-1 border-0 bg-transparent px-2 shadow-none focus-visible:ring-0"
               disabled={isLoading || !isPatientSubmitted}
             />

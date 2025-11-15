@@ -43,12 +43,13 @@ export default function DoctorSignIn() {
         <div className="rounded-lg border p-8 shadow-sm" style={{ backgroundColor: '#FCFAF8' }}>
           <div className="mb-6 text-center">
             <Image
-              src="/heidi-logo.jpg"
+              src="/heidi-logo.png"
               alt="Heidi"
               width={60}
               height={60}
               className="mx-auto mb-3"
             />
+            {/* </CHANGE> */}
             <h1 className="mb-1 text-2xl font-bold" style={{ color: '#211217' }}>
               Doctor Sign In
             </h1>

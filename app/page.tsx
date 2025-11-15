@@ -12,7 +12,7 @@ export default function LandingPage() {
       <div className="flex flex-col items-center gap-8">
         <div className="text-center">
           <Image
-            src="/heidi-logo.jpg"
+            src="/heidi-logo.png"
             alt="Heidi"
             width={80}
             height={80}
