@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { useState, useRef, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import Image from 'next/image'
+import { useSearchParams } from 'next/navigation'
 
 type Message = {
   role: 'user' | 'assistant'
@@ -14,6 +15,11 @@ type Message = {
 }
 
 export default function PatientChat() {
+  const searchParams = useSearchParams()
+  const nhsId = searchParams.get('nhsId') || ''
+  const fullName = searchParams.get('fullName') || ''
+  const dateOfBirth = searchParams.get('dateOfBirth') || ''
+
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -54,6 +60,9 @@ export default function PatientChat() {
             role: m.role,
             content: m.content
           })),
+          nhsId: nhsId,
+          fullName: fullName,
+          dateOfBirth: dateOfBirth,
         }),
       })
 

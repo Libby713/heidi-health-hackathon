@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { put } from '@vercel/blob';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -155,6 +156,38 @@ IMPORTANT:
 - Always respond with valid JSON
 - Guide patients through systematic symptom evaluation`;
 
+async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  initialDelay: number = 1000
+): Promise<T> {
+  let lastError: Error | null = null;
+  
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error: any) {
+      lastError = error;
+      
+      // Check if it's a 529 overload error or other retryable error
+      const isRetryable = 
+        error.message?.includes('529') || 
+        error.message?.includes('overloaded') ||
+        error.message?.includes('503');
+      
+      if (!isRetryable || attempt === maxRetries - 1) {
+        throw error;
+      }
+      
+      const delay = initialDelay * Math.pow(2, attempt);
+      console.log(`[v0] Retry attempt ${attempt + 1}/${maxRetries} after ${delay}ms`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  
+  throw lastError;
+}
+
 export async function POST(request: Request) {
   try {
     console.log('[v0] ===== PATIENT API CONNECTION DIAGNOSTICS =====');
@@ -172,7 +205,8 @@ export async function POST(request: Request) {
       );
     }
     
-    const { messages }: { messages: Message[] } = await request.json();
+    const body = await request.json();
+    const { messages, nhsId, fullName, dateOfBirth } = body;
 
     if (!messages || messages.length === 0) {
       return new Response(JSON.stringify({ error: 'No messages provided' }), {
@@ -184,29 +218,33 @@ export async function POST(request: Request) {
     console.log('[v0] Calling Claude API');
     const startTime = Date.now();
 
-    const anthropicResponse = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-3-haiku-20240307',
-        max_tokens: 1024,
-        temperature: 0.3,
-        system: ENHANCED_SYSTEM_PROMPT,
-        messages: messages,
-      }),
-    });
+    const anthropicResponse = await retryWithBackoff(async () => {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model: 'claude-3-haiku-20240307',
+          max_tokens: 1024,
+          temperature: 0.3,
+          system: ENHANCED_SYSTEM_PROMPT,
+          messages: messages,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('[v0] Claude API error:', errorData);
+        throw new Error(`Claude API error (${response.status}): ${JSON.stringify(errorData)}`);
+      }
+
+      return response;
+    }, 3, 1000); // 3 retries with 1 second initial delay
 
     const responseTime = Date.now() - startTime;
-
-    if (!anthropicResponse.ok) {
-      const errorData = await anthropicResponse.json();
-      console.error('[v0] Claude API error:', errorData);
-      throw new Error(`Claude API error: ${JSON.stringify(errorData)}`);
-    }
 
     const data = await anthropicResponse.json();
     const responseText = data.content[0]?.text || '';
@@ -235,6 +273,35 @@ export async function POST(request: Request) {
 
     const questionTemplate = QUESTION_TEMPLATES[parsedResponse.question_type as keyof typeof QUESTION_TEMPLATES];
     const options = questionTemplate ? questionTemplate.options : undefined;
+
+    if (nhsId) {
+      try {
+        console.log('[v0] Saving conversation to Blob for NHS ID:', nhsId);
+        
+        // Format the conversation as text
+        const conversationText = messages.map((msg: Message) => {
+          return `${msg.role.toUpperCase()}: ${msg.content}`;
+        }).join('\n\n');
+        
+        console.log('[v0] ===== BLOB WRITE CONTENT =====');
+        console.log('[v0] NHS ID:', nhsId);
+        console.log('[v0] Content being written to Blob:');
+        console.log(conversationText);
+        console.log('[v0] ===================================');
+        
+        // Save to Blob storage with NHS ID as filename
+        const blob = await put(`${nhsId}.txt`, conversationText, {
+          access: 'public',
+          addRandomSuffix: false, // Keep consistent filename
+          allowOverwrite: true, // Allow overwriting existing files
+        });
+        
+        console.log('[v0] Successfully saved to Blob:', blob.url);
+      } catch (blobError) {
+        console.error('[v0] Error saving to Blob:', blobError);
+        // Don't fail the request if Blob storage fails
+      }
+    }
 
     console.log('[v0] Response processed - Question type:', parsedResponse.question_type);
     console.log('[v0] Options provided:', !!options);

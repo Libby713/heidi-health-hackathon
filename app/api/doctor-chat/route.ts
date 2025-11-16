@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { head } from '@vercel/blob'; // Import head to check blob existence
 
 interface Message {
   role: 'user' | 'assistant';
@@ -74,16 +75,70 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { messages, nhsId, fullName, dateOfBirth } = body;
 
-    // If this is initial patient data submission
     if (!messages && nhsId && fullName && dateOfBirth) {
-      console.log('[v0] Initial patient data submission');
+      console.log('[v0] Initial patient data submission - fetching from Blob');
       
+      let patientHistory = 'No previous patient history found.';
+      
+      try {
+        const blobInfo = await head(`${nhsId}.txt`);
+        
+        if (blobInfo && blobInfo.url) {
+          console.log('[v0] Attempting to fetch from Blob:', blobInfo.url);
+          
+          const blobResponse = await fetch(blobInfo.url);
+          
+          if (blobResponse.ok) {
+            patientHistory = await blobResponse.text();
+            console.log('[v0] Successfully fetched patient history from Blob');
+            console.log('[v0] ===== PATIENT HISTORY RETRIEVED =====');
+            console.log('[v0] NHS ID:', nhsId);
+            console.log('[v0] History:', patientHistory);
+            console.log('[v0] =======================================');
+          } else {
+            console.log('[v0] Blob fetch failed with status:', blobResponse.status);
+          }
+        }
+      } catch (blobError) {
+        console.log('[v0] No existing patient history found in Blob:', blobError);
+      }
+
       const initialPrompt = `Patient Information:
 - Name: ${fullName}
 - Date of Birth: ${dateOfBirth}
 - NHS ID: ${nhsId}
 
-Please provide an initial assessment prompt for the doctor to begin entering clinical data.`;
+Patient Conversation History:
+${patientHistory}
+
+Please analyze the patient's conversation history above and provide a comprehensive clinical summary in clear, readable prose. Structure your response as follows:
+
+CHIEF COMPLAINT:
+[Describe the main presenting issue]
+
+SYMPTOM CHARACTERISTICS:
+[Detail onset, duration, severity, quality, and progression]
+
+ASSOCIATED SYMPTOMS:
+[List any additional symptoms mentioned]
+
+RED FLAGS:
+[Note any concerning features requiring urgent attention]
+
+CLINICAL IMPRESSION:
+[Provide your overall assessment]
+
+Write in clear, professional medical language suitable for clinical handover. Do NOT use JSON format - provide natural, readable text.`;
+
+      const summarySystemPrompt = `You are a clinical decision support AI providing clear, readable summaries for doctors. 
+
+Provide concise, professional clinical summaries in natural prose format. Structure information clearly with headings, but write in complete sentences and paragraphs - NOT in JSON format.
+
+Focus on:
+- Clinical relevance
+- Evidence-based reasoning
+- Clear communication
+- Professional medical language`;
 
       const anthropicResponse = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -96,7 +151,7 @@ Please provide an initial assessment prompt for the doctor to begin entering cli
           model: 'claude-3-haiku-20240307',
           max_tokens: 1024,
           temperature: 0.3,
-          system: DOCTOR_SYSTEM_PROMPT,
+          system: summarySystemPrompt,
           messages: [{ role: 'user', content: initialPrompt }],
         }),
       });
@@ -110,31 +165,19 @@ Please provide an initial assessment prompt for the doctor to begin entering cli
       const data = await anthropicResponse.json();
       const responseText = data.content[0]?.text || '';
       
-      let parsedResponse;
-      try {
-        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          parsedResponse = JSON.parse(jsonMatch[0]);
-        } else {
-          throw new Error('No JSON found');
-        }
-      } catch (e) {
-        parsedResponse = {
-          message: responseText,
-          question_type: 'free_form'
-        };
-      }
+      const messageContent = responseText;
 
-      const messageContent = typeof parsedResponse.message === 'string' 
-        ? parsedResponse.message 
-        : responseText;
-
-      console.log('[v0] ===== INITIAL ASSESSMENT SUCCESSFUL =====');
+      console.log('[v0] ===== CLINICAL SUMMARY FOR DOCTOR =====');
+      console.log('[v0] NHS ID:', nhsId);
+      console.log('[v0] Summary:', messageContent);
+      console.log('[v0] =======================================');
+      
+      console.log('[v0] ===== INITIAL ASSESSMENT WITH PATIENT HISTORY SUCCESSFUL =====');
 
       return new Response(
         JSON.stringify({
           content: messageContent,
-          questionType: parsedResponse.question_type
+          questionType: 'free_form'
         }),
         {
           status: 200,

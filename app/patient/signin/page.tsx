@@ -23,7 +23,12 @@ export default function PatientSignIn() {
     
     setTimeout(() => {
       setIsLoading(false)
-      router.push('/patient')
+      const params = new URLSearchParams({
+        nhsId: nhsId,
+        fullName: fullName,
+        dateOfBirth: dateOfBirth
+      })
+      router.push(`/patient?${params.toString()}`)
     }, 1000)
   }
 
