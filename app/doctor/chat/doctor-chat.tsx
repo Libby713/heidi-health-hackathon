@@ -204,15 +204,6 @@ export default function DoctorChat() {
             {messages.length > 0 && (
               <div className="flex items-center justify-between border-b px-6 py-3">
                 <h2 className="text-sm font-medium text-muted-foreground">Chat with Heidi</h2>
-                <Button
-                  onClick={handleReset}
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 gap-2 text-muted-foreground hover:text-foreground"
-                >
-                  <RotateCcw className="h-4 w-4" />
-                  Reset
-                </Button>
               </div>
             )}
 
