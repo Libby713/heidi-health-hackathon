@@ -28,7 +28,7 @@ export default function LandingPage() {
 
         <div className="flex gap-4">
           <Button
-            onClick={() => router.push('/patient')}
+            onClick={() => router.push('/patient/signin')}
             size="lg"
             className="h-14 w-40 text-lg text-white transition-colors hover:opacity-90"
             style={{ backgroundColor: '#211217' }}
