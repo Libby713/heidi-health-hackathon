@@ -37,15 +37,6 @@ export default function PatientSignIn() {
   return (
     <div className="flex h-screen flex-col items-center justify-center p-4" style={{ backgroundColor: '#F9F4F1' }}>
       <div className="w-full max-w-md">
-        <Button
-          variant="ghost"
-          onClick={() => router.push('/')}
-          className="mb-6 text-sm"
-          style={{ color: '#211217' }}
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Home
-        </Button>
 
         <div className="rounded-lg border p-8 shadow-sm" style={{ backgroundColor: '#FCFAF8' }}>
           <div className="mb-6 text-center">
